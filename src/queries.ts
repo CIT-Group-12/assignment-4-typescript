@@ -38,20 +38,41 @@ export interface DeptCount {
 
 /** A page of students, ordered by id. */
 export async function listStudents(limit: number, offset: number): Promise<Student[]> {
-  // TODO
-  throw new Error('not implemented');
+  const {rows} = await pool.query<Student>(
+    `SELECT id, name, dept_name as "deptName", tot_cred as "totCred"
+    FROM student
+    ORDER BY id
+    LIMIT $1
+    OFFSET $2;`,
+    [limit, offset]
+  );
+    
+    return rows;
 }
 
 /** One student, or undefined when there is no such id. */
 export async function findStudent(id: string): Promise<Student | undefined> {
-  // TODO
-  throw new Error('not implemented');
+    const { rows } = await pool.query<Student>(
+    `SELECT id, name, dept_name AS "deptName", tot_cred as "totCred"
+     FROM student
+     WHERE id = $1`,
+    [id]
+  );
+
+  return rows[0];
 }
 
 /** The students of one department, ordered by name. */
 export async function studentsIn(deptName: string): Promise<Student[]> {
-  // TODO
-  throw new Error('not implemented');
+  const { rows } = await pool.query<Student>(
+    `SELECT id, name, dept_name AS "deptName", tot_cred as "totCred"
+     FROM student
+     WHERE dept_name = $1
+     ORDER BY name`,
+    [deptName]
+  );
+
+  return rows;
 }
 
 // --- A2. A join -----------------------------------------------------------
@@ -67,8 +88,13 @@ export async function studentsIn(deptName: string): Promise<Student[]> {
  *     SELECT ..., danish_grade(t.grade) AS grade
  */
 export async function coursesFor(studentId: string): Promise<CourseRow[]> {
-  // TODO
-  throw new Error('not implemented');
+  const { rows } = await pool.query(`
+    SELECT course_id as "courseId", title, danish_grade(grade)
+    FROM takes
+    NATURAL JOIN course
+    WHERE takes.id = $1`, [studentId]);
+
+    return rows;
 }
 
 // --- A3. Aggregating ------------------------------------------------------
@@ -79,20 +105,35 @@ export async function coursesFor(studentId: string): Promise<CourseRow[]> {
  * look at the type of what you get.
  */
 export async function studentsPerDepartment(): Promise<DeptCount[]> {
-  // TODO
-  throw new Error('not implemented');
+  const { rows } = await pool.query<DeptCount>(`
+    SELECT dept_name AS "deptName", COUNT (*) :: int AS students
+    FROM student
+    GROUP BY dept_name
+    ORDER BY dept_name`  
+  );
+
+  return rows;
 }
 
 // --- A4. Writing ----------------------------------------------------------
 
 /** Stores a student and returns the row the database stored. */
 export async function insertStudent(student: Student): Promise<Student> {
-  // TODO
-  throw new Error('not implemented');
+  const { rows } = await pool.query(`
+    INSERT INTO student (id, name, dept_name, tot_cred)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, name, dept_name AS deptName, tot_cred AS totCred
+    `, [student.id, student.name, student.deptName, student.totCred]);
+
+  return rows[0];
 }
 
 /** True when a row was deleted, false when there was nothing to delete. */
 export async function deleteStudent(id: string): Promise<boolean> {
-  // TODO
-  throw new Error('not implemented');
+  const result = await pool.query(`
+    DELETE
+    FROM student
+    WHERE id = $1`, [id]);
+
+  return result.rowCount === 1;
 }
