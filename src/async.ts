@@ -20,6 +20,8 @@ export interface Overview {
  */
 export async function firstCourseTitle(studentId: string): Promise<string | undefined> {
 
+  // I use an explicit check because a missing student is an expected
+  // result, not an error. Actual database errors should still propagate.
   const student = await findStudent(studentId);
 
   if (student === undefined) {

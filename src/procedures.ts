@@ -49,8 +49,17 @@ export async function transcriptOrUndefined(
  * Returns the new credit total.
  */
 export async function enrolWithProcedure(
-  studentId: string, courseId: string, secId: string,
-  semester: string, year: number): Promise<number> {
-  // TODO
-  throw new Error('not implemented');
+  studentId: string,
+  courseId: string,
+  secId: string,
+  semester: string,
+  year: number
+): Promise<number> {
+
+  const { rows } = await pool.query<{ new_total: string }>(
+    `CALL enrol_student($1, $2, $3, $4, $5, NULL)`,
+    [studentId, courseId, secId, semester, year]
+  );
+
+  return Number(rows[0].new_total);
 }
