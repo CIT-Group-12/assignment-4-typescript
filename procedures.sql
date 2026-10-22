@@ -69,8 +69,28 @@ LANGUAGE plpgsql AS $$
 DECLARE
   v_credits numeric;
 BEGIN
-  -- TODO
-  NULL;
+
+  SELECT credits
+  INTO v_credits
+  FROM course
+  WHERE course_id = p_course_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No such course: %', p_course_id;
+  END IF;
+
+  INSERT INTO takes (
+    id, course_id, sec_id, semester, year, grade
+  )
+  VALUES (
+    p_id, p_course_id, p_sec_id, p_semester, p_year, NULL
+  );
+
+  UPDATE student
+  SET tot_cred = tot_cred + v_credits
+  WHERE id = p_id
+  RETURNING tot_cred INTO new_total;
+
 END;
 $$;
 

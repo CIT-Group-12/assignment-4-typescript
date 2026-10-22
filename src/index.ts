@@ -5,12 +5,12 @@
 // as often as you like.
 
 import { pool } from './db.js';
-// import {
-//   listStudents, findStudent, studentsIn, coursesFor,
-//   studentsPerDepartment, insertStudent, deleteStudent,
-// } from './queries.js';
+import {
+  listStudents, findStudent, studentsIn, coursesFor,
+  studentsPerDepartment, insertStudent, deleteStudent,
+} from './queries.js';
 // import { enrolInTypeScript } from './transaction.js';
-// import { transcriptOf, transcriptOrUndefined, enrolWithProcedure } from './procedures.js';
+import { transcriptOf, transcriptOrUndefined, enrolWithProcedure } from './procedures.js';
 import { firstCourseTitle, overview, overviewSlowly, removeAndCheckBroken, removeAndCheck } from './async.js';
 
 // Start from a known state, so this file can be run again after a failure.
