@@ -64,13 +64,20 @@ export async function overview(): Promise<Overview> {
  * fails, who finds out?
  */
 export async function removeAndCheckBroken(id: string): Promise<boolean> {
+  // Deletion of the student is initiated, but since it is not awaited, a potential error (broken promise) would not be caught.
   deleteStudent(id);
+  // The check runs before the delete is complete, so it finds the student still there.
   const still = await findStudent(id);
+  // Returns true, even if the student was actually deleted in the end.
   return still !== undefined;
 }
 
 /** The same thing, correct: false when the student is really gone. */
 export async function removeAndCheck(id: string): Promise<boolean> {
-  // TODO
-  throw new Error('not implemented');
+  // Awaits that the deletion of the student is complete - and will catch any error that occurs during the deletion.
+  await deleteStudent(id);
+  // The check runs after the delete is complete, so it finds the student gone.
+  const still = await findStudent(id);
+  // Returns false when the student really is gone, and true if the student is still there.
+  return still !== undefined;
 }

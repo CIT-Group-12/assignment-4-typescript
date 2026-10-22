@@ -135,5 +135,8 @@ export async function deleteStudent(id: string): Promise<boolean> {
     FROM student
     WHERE id = $1`, [id]);
 
+  // result contains the row that was impacted by the SQL query.
+  // Since we only impacted 1 row, result.rowCount should return 1 if the row was deleted.
+  // In that case, the check below will return true".
   return result.rowCount === 1;
 }
