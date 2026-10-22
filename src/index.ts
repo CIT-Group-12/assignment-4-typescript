@@ -11,7 +11,7 @@ import { pool } from './db.js';
 // } from './queries.js';
 // import { enrolInTypeScript } from './transaction.js';
 // import { transcriptOf, transcriptOrUndefined, enrolWithProcedure } from './procedures.js';
-// import { firstCourseTitle, overview, overviewSlowly, removeAndCheckBroken, removeAndCheck } from './async.js';
+import { firstCourseTitle, overview, overviewSlowly, removeAndCheckBroken, removeAndCheck } from './async.js';
 
 // Start from a known state, so this file can be run again after a failure.
 await pool.query("DELETE FROM takes WHERE id = '90000'");
@@ -61,8 +61,8 @@ console.log('connected');
 //   7   (3 from before, plus the 4 credits of CS-101)
 
 // --- Part C ---
-// console.log(await firstCourseTitle('00128'));             // Intro. to Computer Science
-// console.log(await firstCourseTitle('99999'));             // undefined
+console.log(await firstCourseTitle('00128'));             // Intro. to Computer Science
+console.log(await firstCourseTitle('99999'));             // undefined
 // console.time('one after another');
 // console.log(await overviewSlowly());
 // console.timeEnd('one after another');   // about 600 ms
