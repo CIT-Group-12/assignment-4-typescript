@@ -19,8 +19,18 @@ export interface Overview {
  * try/catch or with a check, and say in a comment which you chose and why.
  */
 export async function firstCourseTitle(studentId: string): Promise<string | undefined> {
-  // TODO
-  throw new Error('not implemented');
+
+  // I use an explicit check because a missing student is an expected
+  // result, not an error. Actual database errors should still propagate.
+  const student = await findStudent(studentId);
+
+  if (student === undefined) {
+    return undefined;
+  }
+
+  const courses = await coursesFor(studentId);
+
+  return courses[0]?.title;
 }
 
 // --- C2. Steps that do not depend on each other ---------------------------
@@ -42,13 +52,29 @@ export async function firstCourseTitle(studentId: string): Promise<string | unde
  * the difference visible, and on a real server the waiting is real.
  */
 export async function overviewSlowly(): Promise<Overview> {
-  // TODO
-  throw new Error('not implemented');
+  const studentsCount = await pool.query('SELECT pg_sleep(0.2), count(*)::int AS total FROM student');
+  const coursesCount = await pool.query('SELECT pg_sleep(0.2), count(*)::int AS total FROM course');
+  const departmentsCount = await pool.query('SELECT pg_sleep(0.2), count(*)::int AS total FROM department');
+  
+  return {
+    students: studentsCount.rows[0].total,
+    courses: coursesCount.rows[0].total,
+    departments: departmentsCount.rows[0].total,
+  };
 }
 
 export async function overview(): Promise<Overview> {
-  // TODO
-  throw new Error('not implemented');
+  const [studentsCount, coursesCount, departmentsCount] = await Promise.all([
+    pool.query('SELECT pg_sleep(0.2), count(*)::int AS total FROM student'),
+    pool.query('SELECT pg_sleep(0.2), count(*)::int AS total FROM course'),
+    pool.query('SELECT pg_sleep(0.2), count(*)::int AS total FROM department'),
+  ]);
+
+  return {
+    students: studentsCount.rows[0].total,
+    courses: coursesCount.rows[0].total,
+    departments: departmentsCount.rows[0].total,
+  };
 }
 
 // --- C3. The forgotten await ----------------------------------------------

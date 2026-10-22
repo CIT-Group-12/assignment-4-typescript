@@ -3,20 +3,11 @@
 -- Write them in pgAdmin against the university database, test them there,
 -- and then call them from TypeScript. Fill in the parts marked TODO.
 --
--- You already have one routine in this database: danish_grade(letter), from
--- Task 5 of the database exercises. Both parts of this assignment use it, so
--- check that it is still there before you start:
---
---     SELECT danish_grade('A'), danish_grade('C-'), danish_grade(NULL);
---
--- If it is gone, the exercises folder has the file you wrote it in.
-
-
 -- B2. A FUNCTION that queries and returns a result set.
 --
 -- student_transcript(p_id) returns one row per course the student takes,
--- with the course id, the title, and the grade **already converted** by
--- danish_grade. Order by course id.
+-- with the course id, the title, and the grade converted to the Danish
+-- 7-point scale. Order by course id.
 --
 -- Unlike danish_grade, this one reads tables and needs control flow, so it
 -- is written in plpgsql. It must raise an exception when the student does
@@ -33,11 +24,46 @@ CREATE OR REPLACE FUNCTION student_transcript(p_id varchar)
 RETURNS TABLE (course_id varchar, title varchar, grade varchar)
 LANGUAGE plpgsql AS $$
 BEGIN
-  -- TODO: raise an exception when there is no such student
+  IF NOT EXISTS (
+    SELECT 1
+    FROM student AS s
+    WHERE s.id = p_id
+  ) THEN
+    RAISE EXCEPTION 'No student with id %', p_id;
+  END IF;
 
-  -- TODO: return the courses this student takes, with converted grades
-  --       RETURN QUERY SELECT ... ;
-  RETURN;
+  IF EXISTS (
+    SELECT 1
+    FROM takes AS t
+    WHERE t.id = p_id
+      AND t.grade IS NOT NULL
+      AND t.grade NOT IN ('A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F')
+  ) THEN
+    RAISE EXCEPTION 'Unsupported grade in transcript for student %', p_id
+      USING ERRCODE = '22023';
+  END IF;
+
+  RETURN QUERY
+  SELECT t.course_id, c.title,
+    CASE t.grade
+      WHEN 'A'  THEN '12'
+      WHEN 'A-' THEN '10'
+      WHEN 'B+' THEN '10'
+      WHEN 'B'  THEN '7'
+      WHEN 'B-' THEN '7'
+      WHEN 'C+' THEN '7'
+      WHEN 'C'  THEN '4'
+      WHEN 'C-' THEN '02'
+      WHEN 'D+' THEN '02'
+      WHEN 'D'  THEN '00'
+      WHEN 'D-' THEN '00'
+      WHEN 'F'  THEN '-3'
+      ELSE NULL
+    END::varchar
+  FROM takes AS t
+  JOIN course AS c ON c.course_id = t.course_id
+  WHERE t.id = p_id
+  ORDER BY t.course_id;
 END;
 $$;
 
@@ -69,8 +95,28 @@ LANGUAGE plpgsql AS $$
 DECLARE
   v_credits numeric;
 BEGIN
-  -- TODO
-  NULL;
+
+  SELECT credits
+  INTO v_credits
+  FROM course
+  WHERE course_id = p_course_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'No such course: %', p_course_id;
+  END IF;
+
+  INSERT INTO takes (
+    id, course_id, sec_id, semester, year, grade
+  )
+  VALUES (
+    p_id, p_course_id, p_sec_id, p_semester, p_year, NULL
+  );
+
+  UPDATE student
+  SET tot_cred = tot_cred + v_credits
+  WHERE id = p_id
+  RETURNING tot_cred INTO new_total;
+
 END;
 $$;
 

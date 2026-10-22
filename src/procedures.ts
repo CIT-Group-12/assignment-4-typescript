@@ -20,8 +20,13 @@ export interface TranscriptRow {
  * here as a rejected promise. Let it travel on: this one throws.
  */
 export async function transcriptOf(studentId: string): Promise<TranscriptRow[]> {
-  // TODO
-  throw new Error('not implemented');
+  const result = await pool.query<TranscriptRow>(
+    `SELECT course_id AS "courseId", title, grade
+     FROM student_transcript($1)`,
+    [studentId],
+  );
+
+  return result.rows;
 }
 
 /**
@@ -34,8 +39,20 @@ export async function transcriptOf(studentId: string): Promise<TranscriptRow[]> 
  */
 export async function transcriptOrUndefined(
   studentId: string): Promise<TranscriptRow[] | undefined> {
-  // TODO
-  throw new Error('not implemented');
+  try {
+    return await transcriptOf(studentId);
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'P0001'
+    ) {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 /**
@@ -49,8 +66,17 @@ export async function transcriptOrUndefined(
  * Returns the new credit total.
  */
 export async function enrolWithProcedure(
-  studentId: string, courseId: string, secId: string,
-  semester: string, year: number): Promise<number> {
-  // TODO
-  throw new Error('not implemented');
+  studentId: string,
+  courseId: string,
+  secId: string,
+  semester: string,
+  year: number
+): Promise<number> {
+
+  const { rows } = await pool.query<{ new_total: string }>(
+    `CALL enrol_student($1, $2, $3, $4, $5, NULL)`,
+    [studentId, courseId, secId, semester, year]
+  );
+
+  return Number(rows[0].new_total);
 }
